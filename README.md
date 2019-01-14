@@ -1,2 +1,2 @@
-# MergeJson
-Merge multiple JSON files to one.
+# JoinJson
+Join multiple JSON files to one.
