@@ -5,9 +5,9 @@ add_subdirectory( CppAidKit )
 include( CppAidKit/cmake/all_options.cmake )
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
 
-file( COPY Common.json DESTINATION ${CMAKE_BINARY_DIR} )
-file( COPY Framework.json DESTINATION ${CMAKE_BINARY_DIR} )
-file( COPY Blocks.json DESTINATION ${CMAKE_BINARY_DIR} )
+#file( COPY Common.json DESTINATION ${CMAKE_BINARY_DIR} )
+#file( COPY Framework.json DESTINATION ${CMAKE_BINARY_DIR} )
+#file( COPY Blocks.json DESTINATION ${CMAKE_BINARY_DIR} )
 
 ###############################################################################
 # Setup Qt
