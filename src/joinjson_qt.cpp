@@ -14,12 +14,12 @@
 using namespace std;
 using namespace pera_software::aidkit::qt;
 
-static void appendArray(QJsonArray *target, const QJsonArray &source) {
-    // If we don't append the values then a new array will be added!
-    for (const QJsonValue &value : source) {
-        target->append(value);
-    }
-}
+//static void appendArray(QJsonArray *target, const QJsonArray &source) {
+//    // If we don't append the values then a new array will be added!
+//    for (const QJsonValue &value : source) {
+//        target->append(value);
+//    }
+//}
 
 template <typename K, typename T>
     void appendMap(QMap<K, T> *target, const QMap<K, T> &source) {
@@ -46,6 +46,7 @@ static QJsonArray readJsonArray(const QString &fileName) {
 
     QFile inputFile(fileName);
     if (inputFile.open(QFile::ReadOnly)) {
+        cout << "Reading file '" << fileName << "' ..." << endl;
         jsonArray = QJsonDocument::fromJson(inputFile.readAll()).array();
     } else {
         cerr << "File '" << fileName << "' could not be open for reading!" << endl;
@@ -56,6 +57,7 @@ static QJsonArray readJsonArray(const QString &fileName) {
 static bool writeJsonArray(const QString &fileName, const QJsonArray &jsonArray) {
     QFile outputFile(fileName);
     if (outputFile.open(QFile::WriteOnly | QFile::Truncate)) {
+        cout << "Writing file '" << fileName << "' ..." << endl;
         QJsonDocument jsonDocument(jsonArray);
         outputFile.write(jsonDocument.toJson());
         return true;
