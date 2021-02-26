@@ -1,113 +1,43 @@
-#include <QCoreApplication>
-#include <QStringLiteral>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QFile>
-#include <QMap>
+#include "join.hpp"
+#include "CompileCommands.hpp"
 #include <pera_software/aidkit/qt/core/Console.hpp>
 
+using namespace pera_software::aidkit::qt;
+
 // TODO: Make it more robust against wrong command line parameters
-// TODO: Show progress information
 // TODO: Move appendArray(), appendMap() to AidKit?
 
 using namespace std;
-using namespace pera_software::aidkit::qt;
 
-//static void appendArray(QJsonArray *target, const QJsonArray &source) {
-//    // If we don't append the values then a new array will be added!
-//    for (const QJsonValue &value : source) {
-//        target->append(value);
-//    }
-//}
-
-template <typename K, typename T>
-	void appendMap(QMap<K, T> *target, const QMap<K, T> &source) {
-		for (auto iterator = source.begin(); iterator != source.end(); ++iterator) {
-			target->insert(iterator.key(), iterator.value());
-		}
-	}
-
-
-static const QString DIRECTORY_KEY(QStringLiteral("directory"));
-static const QString COMMAND_KEY(QStringLiteral("command"));
-static const QString FILE_KEY(QStringLiteral("file"));
-
-struct CompileCommand {
-	QString directory;
-	QString command;
-	QString file;
-};
-
-using CompileCommands = QMap<QString, CompileCommand>;
-
-static QJsonArray readJsonArray(const QString &fileName) {
-	QJsonArray jsonArray;
-
-	QFile inputFile(fileName);
-	if (inputFile.open(QFile::ReadOnly)) {
-		cout << "Reading file '" << fileName << "' ..." << endl;
-		jsonArray = QJsonDocument::fromJson(inputFile.readAll()).array();
-	} else {
-		cerr << "File '" << fileName << "' could not be open for reading!" << endl;
-	}
-	return jsonArray;
-}
-
-static bool writeJsonArray(const QString &fileName, const QJsonArray &jsonArray) {
-	QFile outputFile(fileName);
-	if (outputFile.open(QFile::WriteOnly | QFile::Truncate)) {
-		cout << "Writing file '" << fileName << "' ..." << endl;
-		QJsonDocument jsonDocument(jsonArray);
-		outputFile.write(jsonDocument.toJson());
-		return true;
-	} else {
-		cerr << "File '" << fileName << "' could not be open for writing!" << endl;
-		return false;
-	}
-}
-
-static CompileCommands readCompileCommands(const QString &fileName) {
-	CompileCommands commands;
-	QJsonArray array = readJsonArray(fileName);
-	if (!array.isEmpty()) {
-		for (const QJsonValue &value : array) {
-			QJsonObject object = value.toObject();
-			CompileCommand command = {
-				object[DIRECTORY_KEY].toString(),
-				object[COMMAND_KEY].toString(),
-				object[FILE_KEY].toString()
-			};
-			commands.insert(command.file, command);
-		}
-	}
-	return commands;
-}
-
-static bool writeCompileCommands(const QString &fileName, const CompileCommands &commands) {
-	QJsonArray array;
-
-	for (const CompileCommand &command : commands) {
-		QJsonObject object = {
-			{ DIRECTORY_KEY, command.directory },
-			{ COMMAND_KEY, command.command },
-			{ FILE_KEY, command.file }
-		};
-		array.append(object);
-	}
-	return writeJsonArray(fileName, array);
-}
-
-
-
-int joinCompileCommands(QStringList inputFileNames)
+bool joinCompileCommands(const QStringList &parameters)
 {
-	QString outputFileName = inputFileNames.takeLast();
+	QStringList inputFileNames = parameters.mid(0, parameters.length() - 1);
+	QString outputFileName = parameters.last();
 
-	CompileCommands solutionCompileCommands;
-	for (const QString &inputFileName : inputFileNames) {
-		CompileCommands projectCompileCommands = readCompileCommands(inputFileName);
-		appendMap(&solutionCompileCommands, projectCompileCommands);
-	}
-	return writeCompileCommands(outputFileName, solutionCompileCommands) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return joinCompileCommands(inputFileNames, outputFileName);
 }
+
+bool joinCompileCommands(const QStringList &inputFileNames, const QString &outputFileName)
+{
+	size_t count;
+	CompileCommands compileCommands;
+
+	for (const QString &inputFileName : inputFileNames) {
+		cout << "Reading file '" << inputFileName << "' ..." << endl;
+		count = compileCommands.read(inputFileName);
+		if (count > 0) {
+			cout << "File '" << inputFileName << "' read " << count << " entries." << endl;
+		} else {
+			cerr << "File '" << inputFileName << "' could not be open for reading!" << endl;
+		}
+	}
+	cout << "Writing file '" << outputFileName << "' ..." << endl;
+	count = compileCommands.write(outputFileName);
+	if (count > 0) {
+		cout << "File '" << outputFileName << "' written " << count << " entries." << endl;
+	} else {
+		cerr << "File '" << outputFileName << "' could not be open for writing!" << endl;
+	}
+	return count > 0;
+}
+

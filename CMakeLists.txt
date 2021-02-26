@@ -18,6 +18,10 @@ if ( Qt5Core_FOUND )
 		src/main.cpp
 		src/join.hpp
 		src/join.cpp
+		src/clean.hpp
+		src/clean.cpp
+		src/CompileCommands.hpp
+		src/CompileCommands.cpp
 	)
 	set_default_target_options(compile_commands)
 	target_link_libraries(compile_commands
