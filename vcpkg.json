@@ -1,0 +1,8 @@
+{
+    "name": "compile-commands",
+    "version": "0.0.1",
+    "dependencies": [
+        "gtest",
+        "boost-json"
+    ]
+}
