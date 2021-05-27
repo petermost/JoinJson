@@ -1,7 +1,9 @@
 #pragma once
 
-class QString;
-class QStringList;
+#include <vector>
+#include <string>
+#include <filesystem>
 
-bool cleanCompileCommands(const QStringList &parameters);
-bool cleanCompileCommands(const QString &inputFileName, const QString &outputFileName);
+bool cleanCompileCommands(const std::vector<std::string> &parameters);
+bool cleanCompileCommands(const std::filesystem::path &inputFileName, const std::filesystem::path &outputFileName);
+std::string cleanCommandParameters(const std::string &command);

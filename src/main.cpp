@@ -1,27 +1,33 @@
 #include "join.hpp"
 #include "clean.hpp"
 
-#include <pera_software/aidkit/qt/core/Strings.hpp>
-
-#include <QCoreApplication>
-#include <QStringList>
-
+#include <vector>
+#include <string>
+#include <iostream>
+#include <exception>
 
 using namespace std;
-using namespace pera_software::aidkit::qt;
 
 int main(int argc, char *argv[])
 {
-	QCoreApplication application(argc, argv);
-	// Remove the actual command:
-	QString command = application.arguments().at(1);
-	QStringList parameters = application.arguments().mid(2);
-
-	bool success = false;
-	if (command == "join"_qs || command == "merge"_qs) {
-		success = joinCompileCommands(parameters);
-	} else if (command == "clean"_qs || command == "cleanup"_qs) {
-		success = cleanCompileCommands(parameters);
+	try {
+		vector<string> arguments(&argv[0], &argv[argc]);
+		if (arguments.size() == 1) {
+			cerr << "Usage: " << arguments[0] << " join|merge|clean|cleanup <json_file_names>" << endl;
+			return EXIT_FAILURE;
+		}
+		string command(arguments[1]);
+		vector<string> parameters(arguments.begin() + 2, arguments.end());
+		
+		bool success = false;
+		if (command == "join" || command == "merge") {
+			success = joinCompileCommands(parameters);
+		} else if (command == "clean" || command == "cleanup") {
+			success = cleanCompileCommands(parameters);
+		}
+		return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
+	} catch (const exception &exception) {
+		cerr << "Exception: " << exception.what() << endl;
+		return EXIT_FAILURE;
 	}
-	return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

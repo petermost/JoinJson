@@ -1,26 +1,23 @@
 #pragma once
 
-#include <QMap>
-
-#include <functional>
-
-class QIODevice;
-
-using QPath = QString;
+#include <map>
+#include <vector>
+#include <filesystem>
+#include <pera_software\aidkit\io\file.hpp>
 
 struct CompileCommand {
-	QPath directory;
-	QString command;
-	QPath file;
+    std::string command;
+	std::filesystem::path file;
+    std::filesystem::path directory;
 };
 
-class CompileCommands : public QMap<QPath, CompileCommand> {
+class CompileCommands : public std::vector<CompileCommand> {
 	public:
-		size_t read(const QPath &inputFileName);
-		size_t read(QIODevice *inputDevice);
+		size_t read(const std::filesystem::path &inputFileName);
+		size_t read(pera_software::aidkit::io::file *inputFile);
+        size_t read(const std::string &json);
 
-		size_t write(const QPath &outputFileName) const;
-		size_t write(QIODevice *outputDevice) const;
-
-		void forEach(const std::function<void (CompileCommand *)> &consumer);
+		size_t write(const std::filesystem::path &outputFileName) const;
+		size_t write(pera_software::aidkit::io::file *outputDevice) const;
+        size_t write(std::string *json) const;
 };

@@ -1,7 +1,8 @@
 #pragma once
 
-class QString;
-class QStringList;
+#include <vector>
+#include <string>
+#include <filesystem>
 
-bool joinCompileCommands(const QStringList &parameters);
-bool joinCompileCommands(const QStringList &inputFileNames, const QString &outputFileName);
+bool joinCompileCommands(const std::vector<std::string> &parameters);
+bool joinCompileCommands(const std::vector<std::filesystem::path> &inputFileNames, const std::filesystem::path &outputFileName);

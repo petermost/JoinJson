@@ -1,96 +1,85 @@
 #include "CompileCommands.hpp"
-
-#include <pera_software/aidkit/qt/core/Strings.hpp>
-
-#include <QFile>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-
-// TODO: Show progress information
+#include <boost/json.hpp>
 
 using namespace std;
-using namespace pera_software::aidkit::qt;
+using namespace filesystem;
+using namespace pera_software::aidkit::io;
 
-static const QString DIRECTORY_KEY(QStringLiteral("directory"));
-static const QString COMMAND_KEY(QStringLiteral("command"));
-static const QString FILE_KEY(QStringLiteral("file"));
+namespace json = boost::json;
 
+static const json::string_view DIRECTORY_KEY("directory");
+static const json::string_view COMMAND_KEY("command");
+static const json::string_view FILE_KEY("file");
 
-//static void appendArray(QJsonArray *target, const QJsonArray &source) {
-//    // If we don't append the values then a new array will be added!
-//    for (const QJsonValue &value : source) {
-//        target->append(value);
-//    }
-//}
-
-template <typename K, typename T>
-	void appendMap(QMap<K, T> *target, const QMap<K, T> &source)
-	{
-		for (auto iterator = source.begin(); iterator != source.end(); ++iterator) {
-			target->insert(iterator.key(), iterator.value());
-		}
-	}
-
-size_t CompileCommands::read(QIODevice *inputDevice)
+size_t CompileCommands::read(const path &inputFileName)
 {
-	QJsonArray array = QJsonDocument::fromJson(inputDevice->readAll()).array();
+    file inputFile(inputFileName, file::open_mode::read);
 
-	if (!array.isEmpty()) {
-		for (const QJsonValue &value : qAsConst(array)) {
-			QJsonObject object = value.toObject();
-			CompileCommand command = {
-				.directory = object[DIRECTORY_KEY].toString(),
-				.command = object[COMMAND_KEY].toString(),
-				.file = object[FILE_KEY].toString()
-			};
-			this->insertMulti(command.file, command);
-		}
-	}
-	return static_cast<size_t>(array.size());
+    return read(&inputFile);
 }
 
-size_t CompileCommands::read(const QString &inputFileName)
+size_t CompileCommands::read(file *inputFile)
 {
-	QFile inputFile(inputFileName);
-	if (inputFile.open(QFile::ReadOnly)) {
-		return read(&inputFile);
-	} else {
-		return 0;
-	}
+    size_t count;
+    char buffer[4096];
+    string json;
+	error_code errorCode;
+	
+    while ((count = inputFile->read(buffer, 1, sizeof(buffer), &errorCode)) > 0) {
+        json.append(buffer, count);
+    }
+    return read(json);
 }
 
-size_t CompileCommands::write(QIODevice *outputDevice) const
+size_t CompileCommands::read(const string &json)
 {
-	QJsonArray array;
-
-	for (const CompileCommand &command : *this) {
-		QJsonObject object = {
-			{ DIRECTORY_KEY, command.directory },
-			{ COMMAND_KEY, command.command },
-			{ FILE_KEY, command.file }
-		};
-		array.append(object);
-	}
-	QJsonDocument jsonDocument(array);
-	outputDevice->write(jsonDocument.toJson());
-
-	return static_cast<size_t>(array.size());
+    json::array array = json::parse(json).as_array();
+    if (!array.empty()) {
+        for (json::value &value : array) {
+            json::object object = value.as_object();
+            CompileCommand command = {
+                .command = object[COMMAND_KEY].as_string().c_str(),
+                .file = object[FILE_KEY].as_string().c_str(),
+                .directory = object[DIRECTORY_KEY].as_string().c_str()
+            };
+            this->push_back(command);
+        }
+    }
+    return array.size();
 }
 
-size_t CompileCommands::write(const QPath &outputFileName) const
+size_t CompileCommands::write(const path &outputFileName) const
 {
-	QFile outputFile(outputFileName);
-	if (outputFile.open(QFile::WriteOnly | QFile::Truncate)) {
-		return write(&outputFile);
-	} else {
-		return 0;
-	}
+    file outputFile(outputFileName, file::open_mode::write);
+
+    return write(&outputFile);
 }
 
-void CompileCommands::forEach(const function<void (CompileCommand *)> &consumer)
+size_t CompileCommands::write(file *outputFile) const
 {
-	for (auto &compileCommand : *this) {
-		consumer(&compileCommand);
-	}
+    string json;
+    size_t count = write(&json);
+
+    outputFile->write(json.data(), json.size(), 1);
+
+    return count;
 }
+
+size_t CompileCommands::write(string *json) const
+{
+    json::array array;
+
+    for (const auto &value : *this) {
+        json::object object({
+            { DIRECTORY_KEY, value.directory.string() },
+            { COMMAND_KEY, value.command },
+            { FILE_KEY, value.file.string() }
+        });
+        array.push_back(object);
+    }
+    *json = json::serialize(json::value(array));
+
+    return array.size();
+}
+
+

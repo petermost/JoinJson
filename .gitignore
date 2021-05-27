@@ -1,5 +1,4 @@
-# JSON files:
-*.json
+.vs/
 
 # Qt Creator files:
 CMakeLists.txt.user

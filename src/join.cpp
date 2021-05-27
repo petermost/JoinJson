@@ -1,28 +1,27 @@
 #include "join.hpp"
 #include "CompileCommands.hpp"
-#include <pera_software/aidkit/qt/core/Console.hpp>
-
-using namespace pera_software::aidkit::qt;
+#include <iostream>
 
 // TODO: Make it more robust against wrong command line parameters
 // TODO: Move appendArray(), appendMap() to AidKit?
 
 using namespace std;
+using namespace filesystem;
 
-bool joinCompileCommands(const QStringList &parameters)
+bool joinCompileCommands(const vector<string> &parameters)
 {
-	QStringList inputFileNames = parameters.mid(0, parameters.length() - 1);
-	QString outputFileName = parameters.last();
+	vector<path> inputFileNames(parameters.begin(), parameters.end() - 2);
+	path outputFileName(*(parameters.end() - 1));
 
 	return joinCompileCommands(inputFileNames, outputFileName);
 }
 
-bool joinCompileCommands(const QStringList &inputFileNames, const QString &outputFileName)
+bool joinCompileCommands(const vector<path> &inputFileNames, const path &outputFileName)
 {
 	size_t count;
 	CompileCommands compileCommands;
 
-	for (const QString &inputFileName : inputFileNames) {
+	for (const path &inputFileName : inputFileNames) {
 		cout << "Reading file '" << inputFileName << "' ..." << endl;
 		count = compileCommands.read(inputFileName);
 		if (count > 0) {
